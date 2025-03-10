@@ -1,5 +1,5 @@
 # This code is setting up an asynchronous database connection using SQLModel and SQLAlchemy.
-# SQLAlchemy is a Python library for working with databases.lie typeorm,Interacts with tables using Python classes.
+# SQLAlchemy is a Python library for working with databases.like typeorm,Interacts with tables using Python classes.
 #  An engine in SQLAlchemy is the core database connection that allows your application to interact with the database.
 
 from sqlmodel import create_engine,text,SQLModel
