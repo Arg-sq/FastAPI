@@ -10,7 +10,7 @@ class User(SQLModel,table=True):
     )
     username:str
     email:str
-    password:str
+    password:str=Field(exclude=True)
     first_name:str
     last_name:str
     created_at:datetime=Field(sa_column=Column(pg.TIMESTAMP,default=datetime.now))
