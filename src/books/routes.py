@@ -11,6 +11,7 @@ book_service=BookService()
 
 @book_router.get('/books',response_model=List[Book])
 async def get_all_books(session:AsyncSession=Depends(get_Session))->list:
+#     Here, session: AsyncSession = Depends(get_Session) injects a database session into the function.
     books=await book_service.get_all_books(session)
     return books
 

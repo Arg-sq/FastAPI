@@ -1,0 +1,9 @@
+Generic single-database configuration with an async dbapi.
+
+cmd- alembic init -t async migrations
+
+run migration - alembic revision --autogenerate -m "init"
+
+                                                    Adds a descriptive message ("init") to the migration script name.
+
+update db - alembic upgrade head 

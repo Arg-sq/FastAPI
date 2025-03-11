@@ -4,6 +4,10 @@ import uuid
 
 import sqlalchemy.dialects.postgresql as pg
 
+# In PostgreSQL, UUIDs have a dedicated data type (UUID).
+# SQLAlchemy’s default String type does not automatically map to UUID in PostgreSQL.
+# Using pg.UUID ensures the database stores the UUID as a real UUID type, not just a string.
+# 
 class Book(SQLModel,table=True):
     __tablename__="fastBooks"
     uid: uuid.UUID=Field(
