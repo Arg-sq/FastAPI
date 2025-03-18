@@ -18,3 +18,7 @@ class UserModel(BaseModel):
     created_at:datetime
     updated_at:datetime
     is_verified:bool
+
+class LoginModel(BaseModel):
+    email:str
+    password:str
