@@ -5,18 +5,21 @@ from src.db.main import get_Session
 from sqlmodel.ext.asyncio.session import AsyncSession
 from src.books.service import BookService
 from typing import List
+from src.auth.dependencies import AccessTokenBearer
 
 book_router=APIRouter()
 book_service=BookService()
+access_token_bearer=AccessTokenBearer()
 
 @book_router.get('/books',response_model=List[Book])
-async def get_all_books(session:AsyncSession=Depends(get_Session))->list:
+async def get_all_books(session:AsyncSession=Depends(get_Session),user_details=Depends(access_token_bearer))->list:
 #     Here, session: AsyncSession = Depends(get_Session) injects a database session into the function.
+    # print(user_details)
     books=await book_service.get_all_books(session)
     return books
 
 @book_router.post('/add_books',status_code=status.HTTP_201_CREATED,response_model=Book)
-async def create_a_book(book_payload:BookCreateModel,session:AsyncSession=Depends(get_Session))->dict:
+async def create_a_book(book_payload:BookCreateModel,session:AsyncSession=Depends(get_Session),user_details=Depends(access_token_bearer))->dict:
     #   FastAPI does NOT pass payload directly as a dictionary but  automatically creates a Pydantic model instance.
     #  The Pydantic model instance is NOT a dictionary (it’s an object).
     # Calling .model_dump() converts it back to a dictionary when needed.
@@ -27,13 +30,19 @@ async def create_a_book(book_payload:BookCreateModel,session:AsyncSession=Depend
       return new_book
 
 @book_router.get('/book/{book_uid}',response_model=Book)
-async def get_single_book(book_uid:str,session:AsyncSession=Depends(get_Session))->dict:
-    book=await book_service.get_book(book_uid,session)
-    if book:
-      return book 
-    else:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="Book not found")
+async def get_single_book(book_uid:str,session:AsyncSession=Depends(get_Session),user_details=Depends(access_token_bearer))->dict:
+ 
+    try:
+        book=await book_service.get_book(book_uid,session)
+        print(book)
+        if book is None:
+            print(f"❌ Book with UID {book_uid} not found")  # Debugging output
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Book not found")
 
+        print(f"✅ Found Book: {book}")
+        return book
+    except:  raise HTTPException(status_code=500, detail="Internal Server Error")
+         
 @book_router.patch('/book/{book_uid}',response_model=Book)
 async def update_single_book(book_uid:str,book_payload:UpdateBook,session:AsyncSession=Depends(get_Session))->dict:
    update_book=await book_service.update_book(book_uid,book_payload,session)
@@ -45,9 +54,9 @@ async def update_single_book(book_uid:str,book_payload:UpdateBook,session:AsyncS
           
 
 @book_router.delete('/book/{book_uid}')
-async def delete_single_book(book_uid:str,session:AsyncSession=Depends(get_Session))->dict:
+async def delete_single_book(book_uid:str,session:AsyncSession=Depends(get_Session),user_details=Depends(access_token_bearer))->dict:
       delete_book=await book_service.delete_book(book_uid,session)
-      print(f"{delete_book}-------------")
+  
       if delete_book is None:
            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="Book not found")
       else:

@@ -17,12 +17,13 @@ class BookService:
         return result.all()
 
     async def get_book(self,book_uid:str,session:AsyncSession):
+       
         statement=select(Book).where(Book.uid == book_uid)
-
+       
         result =await session.exec(statement)
         book=result.first()
 
-        return book if book is not None else None
+        return book if book is not None else {}
     
     async def create_book(self,book_payload:BookCreateModel,session:AsyncSession):
         book_payload_dict=book_payload.model_dump()

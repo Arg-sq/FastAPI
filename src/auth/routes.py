@@ -14,6 +14,7 @@ auth_service=AuthService()
 
 REFRESH_TOKEN_EXPIRY=2
 
+
 @auth_router.post('/signup',response_model=UserModel,status_code=status.HTTP_201_CREATED)
 async def create_user(user_payload:UserCreateModel,session:AsyncSession=Depends(get_Session))->dict:
    user_email=user_payload.email
@@ -32,14 +33,13 @@ async def create_user(user_payload:UserCreateModel,session:AsyncSession=Depends(
 async def login_user(login_payload:LoginModel,session:AsyncSession=Depends(get_Session)):
     email = login_payload.email
     password = login_payload.password
-    print("login done1------------------------")
 
     user = await auth_service.get_user_by_email(email, session)
-    print("login done2------------------------",user)
+  
 
     if user is not None:
         password_valid = verify_password(password, user.password)
-        print("login done3------------------------")
+      
 
         if password_valid:
             access_token = create_access_token(
@@ -55,7 +55,7 @@ async def login_user(login_payload:LoginModel,session:AsyncSession=Depends(get_S
                 refresh=True,
                 expiry=(timedelta(days=REFRESH_TOKEN_EXPIRY)),
             )
-            print("login done------------------------")
+         
             return JSONResponse(
                 content={
                     "message": "Login successful",
@@ -65,4 +65,8 @@ async def login_user(login_payload:LoginModel,session:AsyncSession=Depends(get_S
                 }
             )
 
-    raise HTTPException(status.HTTP_404_NOT_FOUND,detail="login invalid")
+    raise HTTPException(status.HTTP_403_FORBIDDEN,detail="login invalid")
+
+@auth_router.delete("/deleteUser/{user_uid}")
+async def delete_user(user_uid: str, session: AsyncSession = Depends(get_Session)):
+    pass
