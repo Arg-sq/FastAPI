@@ -5,9 +5,9 @@ from .service import AuthService
 from src.db.main import get_Session
 from sqlmodel.ext.asyncio.session import AsyncSession
 from .utils import create_access_token,verify_password
-from datetime import timedelta
+from datetime import timedelta,datetime
 from fastapi.responses import JSONResponse
-
+from .dependencies import RefreshTokenBearer
 
 auth_router=APIRouter()
 auth_service=AuthService()
@@ -70,3 +70,17 @@ async def login_user(login_payload:LoginModel,session:AsyncSession=Depends(get_S
 @auth_router.delete("/deleteUser/{user_uid}")
 async def delete_user(user_uid: str, session: AsyncSession = Depends(get_Session)):
     pass
+
+@auth_router.get("/refresh_token")
+async def get_new_access_token(token_details:dict=Depends(RefreshTokenBearer())):
+    expiry_timestamp=token_details['exp']
+    print(token_details)
+
+    if datetime.fromtimestamp(expiry_timestamp)>datetime.now():
+        new_access_token=create_access_token(
+            user_data=token_details['user']
+        )
+        return JSONResponse(content={
+            "access_token":new_access_token
+        })
+    raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,detail="Invalid or expired token")
