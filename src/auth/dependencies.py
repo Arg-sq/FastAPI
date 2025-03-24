@@ -3,6 +3,7 @@ from fastapi.exceptions import HTTPException
 from fastapi.security.http import HTTPAuthorizationCredentials
 from fastapi import status ,Request
 from .utils import decode_token
+from src.db.redis import token_in_blockList
 
 class TokenBearer(HTTPBearer):
     def  __init__(self,auto_error=True):
@@ -10,17 +11,33 @@ class TokenBearer(HTTPBearer):
         # super le Httpbearer vanne  (parent)class ko init method call gareraxa
 
     async def __call__(self, request:Request)->HTTPAuthorizationCredentials|None:
-        creds= await super().__call__(request)
+        try:
+             
+            creds= await super().__call__(request)
 
-        token =creds.credentials
-  
-        token_data=decode_token(token)
-        if not self.token_valid(token):
-            raise HTTPException(status.HTTP_403_FORBIDDEN,detail="Invalid or expired token")
-       
-        self.verify_token_data(token_data)
-        return token_data
+            token =creds.credentials
+    
+            token_data=decode_token(token)
+            if not self.token_valid(token):
+                  raise HTTPException(status.HTTP_403_FORBIDDEN,detail={
+                     "error": "Token is expired or invalid",
+                     "resolution":"Please get a new access token"
+                })
 
+            if await token_in_blockList(token_data['jti']):
+                raise HTTPException(status.HTTP_403_FORBIDDEN,detail={
+                     "error": "Token is blocked or invalid",
+                     "resolution":"Please get a new access token"
+                })
+
+
+            self.verify_token_data(token_data)
+            return token_data
+        
+        except Exception as e:
+            print(f"❌ Error in TokenBearer: {e}")  # Debugging print
+            raise HTTPException(status_code=500, detail=str(e))
+    
     def token_valid(self,token:str)->bool:
         token_data=decode_token(token)
 
