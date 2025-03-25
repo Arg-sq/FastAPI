@@ -1,6 +1,7 @@
 from sqlmodel import SQLModel,Field,Column
 from datetime import datetime,date
 import uuid
+from typing import Optional
 
 import sqlalchemy.dialects.postgresql as pg
 
@@ -13,6 +14,7 @@ class Book(SQLModel,table=True):
     uid: uuid.UUID=Field(
         sa_column=Column(pg.UUID,primary_key=True,nullable=False,default=uuid.uuid4),
     )
+    user_uid:Optional[uuid.UUID]=Field(default=None,foreign_key="users.uid")
     title: str
     author: str
     year: int

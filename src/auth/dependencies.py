@@ -7,6 +7,8 @@ from src.db.redis import token_in_blockList
 from src.db.main import  get_Session
 from sqlmodel.ext.asyncio.session import AsyncSession
 from .service import AuthService
+from typing import List
+from .models import User
 
 user_service=AuthService()
 
@@ -24,13 +26,13 @@ class TokenBearer(HTTPBearer):
     
             token_data=decode_token(token)
             if not self.token_valid(token):
-                  raise HTTPException(status.HTTP_403_FORBIDDEN,detail={
+                  raise HTTPException(status_code= status.HTTP_403_FORBIDDEN,detail={
                      "error": "Token is expired or invalid",
                      "resolution":"Please get a new access token"
                 })
 
             if await token_in_blockList(token_data['jti']):
-                raise HTTPException(status.HTTP_403_FORBIDDEN,detail={
+                raise HTTPException(status_code= status.HTTP_403_FORBIDDEN,detail={
                      "error": "Token is blocked or invalid",
                      "resolution":"Please get a new access token"
                 })
@@ -70,7 +72,22 @@ class RefreshTokenBearer(TokenBearer):
 
 async def get_current_user(token_data:dict=Depends(AccessTokenBearer()),session:AsyncSession=Depends(get_Session)):
      user_email=token_data['user']['email']
-     print(user_email)
+   
      user=await user_service.get_user_by_email(user_email,session)
 
      return user
+
+class RoleChecker:
+     def __init__(self,allowed_roles:List[str]):
+        #   Instance Attributes vs. Local Variables
+        #  self.color = color   ✅ Instance Attribute
+        # color = "red"        ❌ Local Variable (does NOT affect the instance)
+          self.allowed_roles=allowed_roles
+
+     def __call__(self, current_user:User=Depends(get_current_user)):
+          
+        #   able to access the allowed_roles attribute because it is an instance attribute of the class.
+          if current_user.role in self.allowed_roles:
+               return True
+          raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail="Operation not permitted for this login cred")
+          

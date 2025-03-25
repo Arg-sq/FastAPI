@@ -5,13 +5,14 @@ from src.db.main import get_Session
 from sqlmodel.ext.asyncio.session import AsyncSession
 from src.books.service import BookService
 from typing import List
-from src.auth.dependencies import AccessTokenBearer
+from src.auth.dependencies import AccessTokenBearer,RoleChecker
 
 book_router=APIRouter()
 book_service=BookService()
 access_token_bearer=AccessTokenBearer()
+role_checker=Depends(RoleChecker(["admin",]))
 
-@book_router.get('/books',response_model=List[Book])
+@book_router.get('/books',response_model=List[Book],dependencies=[role_checker])
 async def get_all_books(session:AsyncSession=Depends(get_Session),user_details=Depends(access_token_bearer))->list:
 #     Here, session: AsyncSession = Depends(get_Session) injects a database session into the function.
     # print(user_details)

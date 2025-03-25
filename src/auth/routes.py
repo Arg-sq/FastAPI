@@ -7,11 +7,12 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from .utils import create_access_token,verify_password
 from datetime import timedelta,datetime
 from fastapi.responses import JSONResponse
-from .dependencies import RefreshTokenBearer,AccessTokenBearer,get_current_user
+from .dependencies import RefreshTokenBearer,AccessTokenBearer,get_current_user,RoleChecker
 from src.db.redis import add_jti_to_block
 
 auth_router=APIRouter()
 auth_service=AuthService()
+role_checker=RoleChecker(["admin","user"])
 
 REFRESH_TOKEN_EXPIRY=2
 
@@ -47,7 +48,7 @@ async def login_user(login_payload:LoginModel,session:AsyncSession=Depends(get_S
                 user_data={
                     "email": user.email,
                     "user_uid": str(user.uid),
-                    # "role": user.role,
+                    "role": user.role,
                 }
             )
 
@@ -87,7 +88,7 @@ async def get_new_access_token(token_details:dict=Depends(RefreshTokenBearer()))
     raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,detail="Invalid or expired token")
 
 @auth_router.get("/profile")
-async def get_curent_user(user=Depends(get_current_user)):
+async def get_curent_user(user=Depends(get_current_user),_:bool=Depends(role_checker)):
     return user
 
 
